@@ -1,4 +1,4 @@
-# 🌍 Photeon Retina - DePIN Oracle Node
+# 🌍 Photeon Retina - DePIN 
 
 **Transforming Optical AI GreenOps into Real-World Assets (RWA) on the Blockchain.**
 
