@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import random
 from datetime import datetime
 
-app = FastAPI(title="Photeon Retina - DePIN Oracle Node")
+app = FastAPI(title="Photeon Retina - DePIN")
 
 # Modèle de la donnée qui sera tokenisée sur la blockchain
 class CarbonAsset(BaseModel):
