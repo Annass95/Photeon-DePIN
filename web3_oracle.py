@@ -1,53 +1,79 @@
-import requests
 import os
-from web3 import Web3
+import requests
 from dotenv import load_dotenv
+from web3 import Web3
 
-# Charge les variables de sécurité (clés privées) depuis un fichier .env caché
+# 1. Charger les clés depuis le .env
 load_dotenv()
-
-# 1. Connexion au réseau Blockchain (Le RPC)
-# Demain, les sponsors te donneront l'URL exacte de leur réseau (Hedera, Whitechain...)
-RPC_URL = "https://rpc.sepolia.org" 
-web3 = Web3(Web3.HTTPProvider(RPC_URL))
-
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
-WALLET_ADDRESS = os.getenv("WALLET_ADDRESS")
-CONTRACT_ADDRESS = "0x..." # Tu mettras l'adresse de ton contrat après l'avoir déployé demain
+RPC_URL = os.getenv("RPC_URL")
+CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+
+# 2. Connexion au réseau Whitechain
+print("🔌 Connexion à l'infrastructure Whitechain...")
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
+account = w3.eth.account.from_key(PRIVATE_KEY)
+print(f"👤 Compte Oracle Node : {account.address}")
+
+# 3. L'ABI (Le traducteur Python -> Solidity)
+contract_abi = [
+    {
+        "inputs": [
+            {"internalType": "string", "name": "_projectId", "type": "string"},
+            {"internalType": "uint256", "name": "_co2ReducedKg", "type": "uint256"}
+        ],
+        "name": "mintCarbonCredit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
+contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=contract_abi)
 
 def fetch_greenops_data():
-    """Étape 1 : Le script vient lire la vitrine de l'API (FastAPI)"""
-    print("Recherche de nouvelles optimisations CO2 sur l'API locale...")
-    response = requests.get("http://127.0.0.1:8000/api/v1/mint-data")
-    return response.json()
+    """Étape 1 : Lire les données de ton IA (YOLOv8 -> FastAPI)"""
+    print("\n🔍 Recherche de nouvelles optimisations CO2 sur l'API Photeon...")
+    try:
+        response = requests.get("http://127.0.0.1:8000/api/v1/mint-data")
+        return response.json()
+    except Exception as e:
+        print("❌ FastAPI hors ligne. Lance uvicorn d'abord !")
+        return None
 
-def mint_on_blockchain(data):
-    """Étape 2 : Le script signe cryptographiquement et envoie au Smart Contract"""
-    project_id = data["project_id"]
+def send_rwa_transaction(project_id, co2_saved):
+    """Étape 2 : Frapper le jeton sur la blockchain"""
+    # Solidity n'aime pas les virgules, on arrondit à l'entier pour la démo
+    co2_entier = int(co2_saved)
+    print(f"\n🚀 Préparation RWA pour le projet {project_id} ({co2_entier} kg de CO2)...")
     
-    # ⚠️ CONVERSION OBLIGATOIRE : Solidity déteste les virgules. 
-    # On multiplie par 100 pour n'avoir que des entiers (4.50 kg -> 450).
-    co2_kg_entier = int(data["co2_reduced_kg"] * 100)
+    try:
+        nonce = w3.eth.get_transaction_count(account.address)
+        
+        # Construction de la transaction avec les règles strictes de Whitechain
+        tx = contract.functions.mintCarbonCredit(project_id, co2_entier).build_transaction({
+            'chainId': 1874,
+            'gas': 2000000,
+            'gasPrice': w3.eth.gas_price,
+            'nonce': nonce,
+        })
 
-    print(f"Préparation de la transaction Blockchain pour le projet {project_id}...")
-    print(f"Valeur convertie pour Solidity : {co2_kg_entier} unités.")
-    
-    if not PRIVATE_KEY:
-        print("ATTENTION : Clé privée manquante. Test à blanc réussi. Fin de l'exécution.")
-        return
+        print("✍️ Signature cryptographique...")
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
 
-    # --- La logique d'envoi Web3 (Commentée jusqu'au déploiement de demain) ---
-    # contract = web3.eth.contract(address=CONTRACT_ADDRESS, abi=ABI_DU_CONTRAT)
-    # tx = contract.functions.mintCarbonCredit(project_id, co2_kg_entier).build_transaction({
-    #     'from': WALLET_ADDRESS,
-    #     'nonce': web3.eth.get_transaction_count(WALLET_ADDRESS)
-    # })
-    # signed_tx = web3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
-    # tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-    # print(f"Succès ! Transaction validée : {web3.to_hex(tx_hash)}")
+        print("📡 Déploiement sur le réseau Whitechain...")
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        
+        print(f"✅ SUCCÈS ! Transaction validée dans le bloc {receipt.blockNumber}")
+        print(f"🔗 Preuve (Hash) : {w3.to_hex(tx_hash)}")
+        
+    except Exception as e:
+        print(f"❌ Échec Web3 : {e}")
 
 if __name__ == "__main__":
-    print("=== Démarrage de l'Oracle Photeon Web3 ===")
+    print("=== 🌐 Démarrage de l'Oracle Photeon ===")
     api_data = fetch_greenops_data()
-    print(f"Donnée API capturée : {api_data}")
-    mint_on_blockchain(api_data)
+    
+    if api_data:
+        # On extrait les données de ton API et on les envoie à la blockchain
+        send_rwa_transaction(api_data["project_id"], api_data["co2_reduced_kg"])

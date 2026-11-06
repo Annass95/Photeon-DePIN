@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photeon Retina | Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Les 3 polices de ton Trailer -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* TA PALETTE DE COULEURS EXACTE */
+        :root {
+            --bg-obsidian: #040609;
+            --bg-obsidian-light: #0a0f16;
+            --red-joule: #ff4444;
+            --emerald-photon: #00ff66;
+            --cyan-optic: #00e5ff;
+            --glass-bg: rgba(14, 20, 30, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-obsidian); color: #ffffff; }
+        .font-grotesk { font-family: 'Space Grotesk', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* LE GLASSMORPHISM PUR */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 255, 102, 0.3);
+            box-shadow: 0 15px 40px -10px rgba(0, 255, 102, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* BOUTON WEB3 CYBERPUNK */
+        .btn-mint {
+            background: linear-gradient(90deg, #00b347 0%, var(--emerald-photon) 100%);
+            color: #000;
+            transition: all 0.3s;
+        }
+        .btn-mint:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* CUSTOM UTILITIES POUR LES COULEURS */
+        .text-emerald { color: var(--emerald-photon); }
+        .text-cyan { color: var(--cyan-optic); }
+        .text-red-joule { color: var(--red-joule); }
+        .bg-emerald-glow { background: rgba(0, 255, 102, 0.1); border: 1px solid rgba(0, 255, 102, 0.2); }
+        .bg-cyan-glow { background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.2); }
+        
+        /* SCROLLBAR INVISIBLE */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-obsidian); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased bg-[radial-gradient(circle_at_50%_50%,_#0b111a_0%,_#030508_100%)]">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 border-r flex flex-col justify-between hidden md:flex" style="background: var(--bg-obsidian-light); border-color: var(--glass-border);">
+        <div>
+            <div class="h-20 flex items-center px-8 border-b" style="border-color: var(--glass-border);">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center border" style="background: rgba(0,255,102,0.1); border-color: var(--emerald-photon);">
+                        <svg class="w-5 h-5 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <span class="font-bold text-lg tracking-widest font-grotesk text-white uppercase">Photeon</span>
+                </div>
+            </div>
+            <nav class="mt-6 flex flex-col gap-1">
+                <p class="px-8 text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-3">GreenOps Suite</p>
+                <a href="#" class="flex items-center gap-3 px-8 py-3 text-sm font-medium border-r-4 text-emerald" style="background: rgba(0,255,102,0.05); border-color: var(--emerald-photon);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"></path></svg>
+                    Analytics
+                </a>
+                <a href="#" class="flex items-center gap-3 px-8 py-3 text-sm font-medium text-gray-400 hover:text-white transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10"></path></svg>
+                    AI Pipeline (YOLOv8)
+                </a>
+            </nav>
+        </div>
+        <div class="p-6">
+            <div class="glass-card rounded-xl p-4">
+                <p class="text-[10px] font-mono text-gray-400 mb-2 uppercase tracking-wider">FastAPI Status</p>
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2" style="background: var(--emerald-photon);"></span>
+                    </span>
+                    <span class="text-xs font-mono text-emerald" id="api-status">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Subtle cyber grid overlay behind content -->
+        <div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px;"></div>
+
+        <!-- Header -->
+        <header class="h-20 flex items-center justify-between px-8 border-b z-10" style="border-color: var(--glass-border); background: rgba(4,6,9,0.4); backdrop-filter: blur(10px);">
+            <div>
+                <h1 class="text-2xl font-bold font-grotesk tracking-wide">DePIN Dashboard</h1>
+                <p class="text-xs font-mono text-gray-400 mt-1 uppercase">Optical Computing Oracle Node</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="px-4 py-2 glass-card rounded-lg flex items-center gap-3">
+                    <span class="text-[10px] text-gray-400 font-mono tracking-widest uppercase">Project ID</span>
+                    <span class="text-sm font-bold text-cyan font-mono" id="project-id">---</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="flex-1 overflow-y-auto p-8 z-10">
+            
+            <!-- TOP STAT CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500 rounded-full blur-[60px] opacity-10 pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-xs font-mono text-gray-400 tracking-wider uppercase">Energy Saved</p>
+                        <div class="p-2 bg-emerald-glow rounded-lg"><svg class="w-4 h-4 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <h2 class="text-4xl font-bold font-grotesk text-white" id="val-energy">--</h2>
+                        <span class="text-xs font-mono text-emerald">kWh</span>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 text-[11px] font-mono text-emerald">
+                        <span class="px-2 py-1 bg-emerald-glow rounded border border-green-500/20">-75% VS COPPER</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-400 rounded-full blur-[60px] opacity-10 pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-xs font-mono text-gray-400 tracking-wider uppercase">CO2 Mitigated</p>
+                        <div class="p-2 bg-cyan-glow rounded-lg"><svg class="w-4 h-4 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <h2 class="text-4xl font-bold font-grotesk text-white" id="val-co2">--</h2>
+                        <span class="text-xs font-mono text-cyan">kg</span>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 text-[11px] font-mono text-cyan">
+                        <span class="px-2 py-1 bg-cyan-glow rounded border border-cyan-500/20">VERIFIED BY CODECARBON</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-xs font-mono text-gray-400 tracking-wider uppercase">AI Confidence</p>
+                        <div class="p-2 bg-white/5 border border-white/10 rounded-lg"><svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg></div>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <h2 class="text-4xl font-bold font-grotesk text-white" id="val-ai">--</h2>
+                        <span class="text-xs font-mono text-gray-400">%</span>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 text-[11px] font-mono text-gray-400">
+                        <span>YOLOv8 Optical Vision</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between" style="border-color: rgba(0, 255, 102, 0.3);">
+                    <div>
+                        <p class="text-xs font-mono text-emerald tracking-wider uppercase mb-1">Web3 Protocol</p>
+                        <h2 class="text-lg font-grotesk text-white mb-2">RWA Tokenization</h2>
+                    </div>
+                    <button id="mint-btn" class="w-full btn-mint font-mono font-bold text-sm py-3 rounded-xl flex justify-center items-center gap-2 tracking-widest uppercase shadow-lg">
+                        Mint Credit
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+                
+            </div>
+
+            <!-- CHARTS & TERMINAL SECTION -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Chart Container -->
+                <div class="lg:col-span-2 glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-sm font-mono text-gray-300 uppercase tracking-widest">Thermal Dissipation Audit</h3>
+                    </div>
+                    <div class="h-64 w-full">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Web3 Terminal -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4 pb-4 border-b" style="border-color: var(--glass-border);">
+                        <h3 class="text-sm font-mono text-gray-300 uppercase tracking-widest">Oracle Node Logs</h3>
+                        <span class="flex h-2 w-2 rounded-full" style="background: var(--cyan-optic);"></span>
+                    </div>
+                    <div id="terminal" class="flex-1 bg-[#020305] rounded-xl border p-4 font-mono text-[11px] text-emerald overflow-y-auto space-y-2 h-64 shadow-inner" style="border-color: var(--glass-border);">
+                        <p class="text-gray-500">> Awaiting manual Oracle trigger...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 1. Chart.js AVEC TES COULEURS (Red Joule et Emerald Photon)
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'JetBrains Mono', monospace";
+        Chart.defaults.font.size = 10;
+        
+        const trendChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Stress T1', 'Stress T2', 'Stress T3', 'Stress T4', 'Live Session'],
+                datasets: [
+                    {
+                        label: 'Copper Resistance (Joule)',
+                        data: [15.2, 14.8, 15.5, 14.9, 0],
+                        backgroundColor: 'rgba(255, 68, 68, 0.15)', // Red Joule Transparent
+                        borderColor: '#ff4444', // Red Joule
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Silicon Photonics',
+                        data: [3.8, 3.7, 3.9, 3.7, 0],
+                        backgroundColor: 'rgba(0, 255, 102, 0.15)', // Emerald Transparent
+                        borderColor: '#00ff66', // Emerald
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { position: 'top', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
+                },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, beginAtZero: true },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. FETCH API LOCALE
+        let globalData = null;
+
+        async function initDashboard() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/mint-data');
+                const data = await response.json();
+                globalData = data;
+
+                // UI Update
+                document.getElementById('api-status').innerText = "ONLINE";
+                document.getElementById('project-id').innerText = data.project_id;
+                
+                document.getElementById('val-energy').innerText = data.energy_saved_kwh.toFixed(2);
+                document.getElementById('val-co2').innerText = data.co2_reduced_kg.toFixed(2);
+                document.getElementById('val-ai').innerText = (data.ai_confidence_score * 100).toFixed(1);
+
+                // MAJ Graphique Live
+                trendChart.data.datasets[0].data[4] = data.energy_saved_kwh * 4; 
+                trendChart.data.datasets[1].data[4] = data.energy_saved_kwh;
+                trendChart.update();
+
+            } catch (error) {
+                document.getElementById('api-status').innerText = "OFFLINE";
+                document.getElementById('api-status').classList.replace('text-emerald', 'text-red-joule');
+            }
+        }
+
+        initDashboard();
+
+        // 3. ANIMATION TERMINAL WEB3
+        document.getElementById('mint-btn').addEventListener('click', function() {
+            if (!globalData) {
+                alert("Waiting for FastAPI synchronization...");
+                return;
+            }
+
+            const btn = this;
+            const term = document.getElementById('terminal');
+            
+            btn.innerHTML = `PROCESSING...`;
+            btn.style.background = "#333";
+            btn.style.color = "#888";
+            btn.disabled = true;
+
+            term.innerHTML = '';
+            
+            const logs = [
+                `> [GREENOPS] Payload captured from YOLOv8 node.`,
+                `> [CODECARBON] Verifying cryptographic signatures...`,
+                `> [ORACLE] Converting <span style="color:#00e5ff;">${globalData.co2_reduced_kg} kg CO2</span> -> uint256...`,
+                `> [WEB3] Calling mintCarbonCredit('${globalData.project_id}')`,
+                `> [RPC] Sending transaction to blockchain testnet...`,
+                `> [CONSENSUS] Awaiting block inclusion...`,
+                `<br>> <span style="color:#00ff66; font-weight:bold;">[SUCCESS] Transaction Hash:</span>`,
+                `> <span style="color:white;">0x${Math.random().toString(16).substring(2, 42)}</span>`,
+                `> RWA Asset properly registered.`
+            ];
+
+            let delay = 0;
+            logs.forEach((log, index) => {
+                setTimeout(() => {
+                    term.innerHTML += `<p>${log}</p>`;
+                    term.scrollTop = term.scrollHeight;
+                    
+                    if (index === logs.length - 1) {
+                        btn.innerHTML = `MINTED SUCCESSFULLY`;
+                        btn.style.background = "rgba(0, 255, 102, 0.2)";
+                        btn.style.border = "1px solid #00ff66";
+                        btn.style.color = "#00ff66";
+                    }
+                }, delay);
+                delay += 700;
+            });
+        });
+    </script>
+</body>
+</html>

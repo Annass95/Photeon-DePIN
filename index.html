@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photeon Retina - Beta 1.0 (DePIN Node)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    :root {
+      --bg-obsidian: #040609;
+      --red-joule: #ff4444;
+      --orange-thermal: #ff8800;
+      --emerald-photon: #00ff66;
+      --cyan-optic: #00e5ff;
+      --glass-bg: rgba(14, 20, 30, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html { width: 100vw; height: 100vh; overflow: hidden; background-color: var(--bg-obsidian); font-family: 'Inter', sans-serif; color: #ffffff; }
+    #stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: radial-gradient(circle at 50% 50%, #0b111a 0%, #030508 100%); }
+    #cyber-grid { position: absolute; inset: -50%; background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; transform: perspective(1000px) rotateX(65deg) translateZ(-250px); pointer-events: none; z-index: 1; }
+    #particle-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+    #ambient-glow { position: absolute; width: 850px; height: 850px; left: 50%; top: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255,68,68,0.22) 0%, transparent 70%); filter: blur(60px); z-index: 1; pointer-events: none; }
+    #laser-flash { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--emerald-photon), var(--cyan-optic), #ffffff, transparent); opacity: 0; z-index: 50; pointer-events: none; mix-blend-mode: screen; }
+    .hud-topbar { position: absolute; top: 32px; left: 48px; right: 48px; display: flex; justify-content: space-between; align-items: center; z-index: 30; font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.65); border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px; }
+    .status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red-joule); box-shadow: 0 0 12px var(--red-joule); margin-right: 8px; }
+    .act { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10; opacity: 0; pointer-events: none; }
+    .glass-card { background: var(--glass-bg); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.65); }
+    #act1 { flex-direction: column; gap: 32px; text-align: center; }
+    .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.25em; text-transform: uppercase; padding: 6px 16px; border-radius: 999px; display: inline-block; margin-bottom: 18px; }
+    .eyebrow-red { background: rgba(255,68,68,0.15); color: var(--red-joule); border: 1px solid rgba(255,68,68,0.45); }
+    .eyebrow-green { background: rgba(0,255,102,0.12); color: var(--emerald-photon); border: 1px solid rgba(0,255,102,0.45); }
+    .hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 60px; font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
+    .hero-sub { font-size: 20px; color: rgba(255,255,255,0.72); font-weight: 300; max-width: 850px; margin: 0 auto; }
+    .thermal-alerts-grid { display: flex; gap: 24px; justify-content: center; margin-top: 16px; }
+    .alert-card { width: 310px; padding: 26px; border-color: rgba(255,68,68,0.4); background: rgba(45,10,14,0.72); text-align: left; position: relative; overflow: hidden; border-radius: 16px; }
+    .alert-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, var(--red-joule), var(--orange-thermal)); }
+    .alert-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--orange-thermal); margin-bottom: 10px; }
+    .alert-value { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; margin-bottom: 6px; }
+    .alert-desc { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.4; }
+    #act2 { gap: 64px; padding: 0 80px; display: flex; align-items: center; justify-content: center; }
+    .chip-showcase-3d { width: 420px; height: 420px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .chip-frame { width: 380px; height: 380px; border-radius: 28px; padding: 16px; border: 1px solid rgba(0,255,102,0.5); background: radial-gradient(circle, rgba(0,255,102,0.16), rgba(4,12,10,0.85)); box-shadow: 0 0 70px rgba(0,255,102,0.28); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .act2-copy { max-width: 600px; }
+    .feature-pills { display: flex; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
+    .pill { font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 12px 20px; border-radius: 12px; background: rgba(0,255,102,0.08); border: 1px solid rgba(0,255,102,0.3); color: #d8ffea; }
+    .pill strong { color: var(--emerald-photon); }
+    #act3 { padding: 80px 64px 40px; }
+    .saas-dashboard { width: 100%; max-width: 1480px; height: 740px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; padding: 28px; border-color: rgba(0,255,102,0.28); }
+    .panel { background: rgba(7,12,18,0.85); border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 12px; }
+    .panel-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .tag-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(0,229,255,0.12); color: var(--cyan-optic); border: 1px solid rgba(0,229,255,0.3); }
+    .solar-viewport { position: relative; flex: 1; background: #040f1a; border-radius: 12px; border: 1px solid rgba(0,229,255,0.22); overflow: hidden; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 10px; padding: 18px; }
+    .solar-cell { background: #0d2238; border: 1px solid rgba(0,229,255,0.2); border-radius: 6px; position: relative; }
+    .solar-cell.hotspot-target { background: radial-gradient(circle, rgba(255,68,68,0.7), rgba(255,136,0,0.3) 60%, #0d2238 100%); border-color: var(--red-joule); }
+    #yolo-laser-line { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--emerald-photon); box-shadow: 0 0 20px var(--emerald-photon); z-index: 10; }
+    #yolo-bbox { position: absolute; border: 2px solid var(--red-joule); background: rgba(255,68,68,0.14); border-radius: 6px; z-index: 12; opacity: 0; pointer-events: none; }
+    .bbox-label { position: absolute; top: -26px; left: -2px; background: var(--red-joule); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+    .yolo-telemetry-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .telemetry-mini { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); }
+    .telemetry-mini span { display: block; color: rgba(255,255,255,0.45); font-size: 10px; margin-bottom: 4px; }
+    .metrics-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .metric-box { padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
+    .metric-box.copper { border-left: 3px solid var(--red-joule); }
+    .metric-box.photonic { border-left: 3px solid var(--emerald-photon); background: rgba(0,255,102,0.05); }
+    .metric-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+    .metric-kwh { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .metric-co2 { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.7); }
+    .chart-container { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+    .bar-group { display: flex; flex-direction: column; gap: 8px; }
+    .bar-header { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .bar-track { width: 100%; height: 26px; background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden; position: relative; }
+    .bar-fill-copper { width: 0%; height: 100%; background: linear-gradient(90deg, #991b1b, var(--red-joule)); border-radius: 8px; }
+    .bar-fill-photonic { width: 0%; height: 100%; background: linear-gradient(90deg, #059669, var(--emerald-photon)); border-radius: 8px; }
+    .savings-banner { margin-top: 16px; padding: 16px 20px; border-radius: 14px; background: rgba(0,255,102,0.12); border: 1px solid rgba(0,255,102,0.4); display: flex; align-items: center; justify-content: space-between; }
+    .savings-badge { font-family: 'Space Grotesk', sans-serif; font-size: 38px; font-weight: 700; color: var(--emerald-photon); }
+    #act4 { flex-direction: column; text-align: center; gap: 24px; display: flex; align-items: center; justify-content: center; }
+    .outro-logo-ring { width: 100px; height: 100px; border-radius: 28px; border: 1px solid var(--emerald-photon); background: radial-gradient(circle, rgba(0,255,102,0.25), transparent 70%); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .outro-title { font-family: 'Space Grotesk', sans-serif; font-size: 64px; font-weight: 700; background: linear-gradient(90deg, #ffffff 0%, var(--emerald-photon) 60%, var(--cyan-optic) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .outro-slogan { font-size: 24px; color: rgba(255,255,255,0.85); }
+    #player-controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 16px; padding: 10px 20px; border-radius: 999px; background: rgba(8,12,18,0.85); border: 1px solid rgba(255,255,255,0.15); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .btn-ctrl { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 12px; transition: 0.3s; }
+    .btn-ctrl:hover { background: var(--emerald-photon); color: #000; border-color: var(--emerald-photon); }
+    
+    /* --- NOUVEAU : BOUTON WEB3 ET TERMINAL POUR L'ACTE 4 --- */
+    .web3-container { margin-top: 40px; display: flex; flex-direction: column; align-items: center; pointer-events: auto; }
+    .btn-mint { background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%); color: #000; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 16px; padding: 16px 40px; border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 3px; transition: all 0.3s; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+    .btn-mint:hover { box-shadow: 0 0 30px rgba(34, 197, 94, 0.8); transform: translateY(-3px); }
+    .terminal-log { margin-top: 24px; background: rgba(0,0,0,0.8); border: 1px solid rgba(0,255,102,0.3); padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #00ff66; text-align: left; border-radius: 12px; width: 600px; height: 160px; overflow-y: auto; display: none; box-shadow: inset 0 0 20px rgba(0,255,102,0.1); }
+  </style>
+</head>
+<body>
+<div id="stage">
+  <div id="cyber-grid"></div>
+  <div id="ambient-glow"></div>
+  <canvas id="particle-canvas"></canvas>
+  <div id="laser-flash"></div>
+
+  <div class="hud-topbar">
+    <div>
+      <span class="status-dot" id="hud-dot"></span>
+      <span id="hud-mode">INFRASTRUCTURE AUDIT // COPPER BUS BOTTLENECK</span>
+    </div>
+    <div id="hud-clock">STRESS TEST WINDOW : 0000.00 s / 2230.12 s</div>
+    <div>PHOTEON RETINA — BETA 1.0</div>
+  </div>
+
+  <!-- ACTE 1 -->
+  <section class="act" id="act1">
+    <div class="act1-header">
+      <div class="eyebrow eyebrow-red">ALERTE INFRASTRUCTURE IA // EFFET JOULE CRITIQUE</div>
+      <h1 class="hero-title">Le Mur Thermique du Cuivre.</h1>
+      <p class="hero-sub">Dans les data centers actuels, la résistance électrique des bus cuivre bride l'IA et fait exploser l'empreinte carbone.</p>
+    </div>
+    <div class="thermal-alerts-grid">
+      <div class="glass-card alert-card">
+        <div class="alert-label">DISSIPATION THERMIQUE</div>
+        <div class="alert-value" style="color: var(--red-joule);">EFFET JOULE</div>
+        <div class="alert-desc">Surchauffe des interconnexions métalliques sous charge GPU intensive.</div>
+      </div>
+      <div class="glass-card alert-card">
+        <div class="alert-label">STRESS TEST (2230.12s)</div>
+        <div class="alert-value">0.017075 <span style="font-size:16px;">kWh</span></div>
+        <div class="alert-desc">Consommation électrique sur serveur électronique standard.</div>
+      </div>
+      <div class="glass-card alert-card">
+        <div class="alert-label">EMPREINTE CARBONE</div>
+        <div class="alert-value" style="color: var(--orange-thermal);">0.000957 <span style="font-size:16px;">kg CO₂</span></div>
+        <div class="alert-desc">Émissions directes induites par les pertes ohmmiques.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTE 2 : PHOTONIC CORE VECTORIEL -->
+  <section class="act" id="act2">
+    <div class="chip-showcase-3d">
+      <div class="chip-frame">
+        <svg viewBox="0 0 400 400" width="100%" height="100%" fill="none">
+          <rect x="70" y="70" width="260" height="260" rx="24" fill="#041f14" stroke="#00ff66" stroke-width="3"/>
+          <rect x="115" y="115" width="170" height="170" rx="14" fill="#073824" stroke="#00e5ff" stroke-width="2"/>
+          <path d="M20 140 H115 M20 200 H115 M20 260 H115 M285 140 H380 M285 200 H380 M285 260 H380" stroke="#00ff66" stroke-width="3"/>
+          <path d="M140 20 V115 M200 20 V115 M260 20 V115 M140 285 V380 M200 285 V380 M260 285 V380" stroke="#00e5ff" stroke-width="3"/>
+          <circle cx="200" cy="200" r="48" fill="#00ff66" fill-opacity="0.25" stroke="#00ff66" stroke-width="2.5"/>
+          <text x="200" y="205" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="13" font-weight="bold" letter-spacing="1">PHOTONIC CORE</text>
+        </svg>
+      </div>
+    </div>
+    <div class="act2-copy">
+      <div class="eyebrow eyebrow-green">RUPTURE PHYSIQUE // SILICON PHOTONICS</div>
+      <h2 class="hero-title">Des Photons à la place des Électrons.</h2>
+      <p class="hero-sub">Remplacement des bus en cuivre par des guides d'ondes optiques. Les données circulent à la vitesse de la lumière.</p>
+      <div class="feature-pills">
+        <div class="pill"><strong>0 EFFET JOULE</strong> // Zéro surchauffe</div>
+        <div class="pill"><strong>-75% D'ÉNERGIE</strong> // GreenOps Ready</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTE 3 -->
+  <section class="act" id="act3">
+    <div class="glass-card saas-dashboard">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span style="color:var(--emerald-photon);">●</span> INSPECTION CV // YOLOv8 SOLAR ARRAY</div>
+          <span class="tag-mono">1</span>
+        </div>
+        <div class="solar-viewport" id="solar-grid">
+          <div id="yolo-laser-line"></div>
+          <div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div>
+          <div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell hotspot-target" id="hotspot-cell"></div><div class="solar-cell"></div>
+          <div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div>
+          <div id="yolo-bbox"><div class="bbox-label">THERMAL HOTSPOT [0.992]</div></div>
+        </div>
+        <div class="yolo-telemetry-footer">
+          <div class="telemetry-mini"><span>MODÈLE</span><strong>YOLOv8x-Solar</strong></div>
+          <div class="telemetry-mini"><span>STRESS TEST</span><strong id="counter-duration" style="color:var(--cyan-optic);">0.00 s</strong></div>
+          <div class="telemetry-mini"><span>ANOMALIE</span><strong style="color:var(--red-joule);">CELL #07</strong></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span style="color:var(--cyan-optic);">◆</span> SONDE CODECARBON // AUDIT EN DIRECT</div>
+          <span class="tag-mono">2</span>
+        </div>
+        <div class="metrics-top-row">
+          <div class="metric-box copper">
+            <div class="metric-title">Cuivre Standard</div>
+            <div class="metric-kwh" style="color:var(--red-joule);"><span id="val-copper-kwh">0.000000</span> kWh</div>
+            <div class="metric-co2"><span id="val-copper-co2">0.000000</span> kg CO₂</div>
+          </div>
+          <div class="metric-box photonic">
+            <div class="metric-title">Silicon Photonics</div>
+            <div class="metric-kwh" style="color:var(--emerald-photon);"><span id="val-photonic-kwh">0.000000</span> kWh</div>
+            <div class="metric-co2"><span id="val-photonic-co2">0.000000</span> kg CO₂</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <div class="bar-group">
+            <div class="bar-header"><span>SERVEUR CUIVRE (EFFET JOULE)</span><span style="color:var(--red-joule);">0.017075 kWh</span></div>
+            <div class="bar-track"><div class="bar-fill-copper" id="bar-copper"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-header"><span>SIMULATION PHOTONIQUE</span><span style="color:var(--emerald-photon);">0.004269 kWh</span></div>
+            <div class="bar-track"><div class="bar-fill-photonic" id="bar-photonic"></div></div>
+          </div>
+        </div>
+        <div class="savings-banner">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--emerald-photon);">GAIN BUSINESS VALIDÉ</div>
+            <div style="font-size:14px; color:rgba(255,255,255,0.85);">Suppression de la dissipation thermique</div>
+          </div>
+          <div class="savings-badge">-75%</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTE 4 : L'OUTRO AVEC L'ORACLE WEB3 -->
+  <section class="act" id="act4">
+    <div class="outro-logo-ring">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00ff66" stroke-width="1.8">
+        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" stroke="#00e5ff"/>
+      </svg>
+    </div>
+    <div class="eyebrow eyebrow-green">MLOPS & GREENOPS PLATFORM</div>
+    <h1 class="outro-title">PHOTEON RETINA</h1>
+    <p class="outro-slogan" style="margin-bottom: 20px;">« L'avenir de l'IA est optique et éco-responsable. »</p>
+    
+    <!-- LE BOUTON WEB3 AJOUTÉ ICI -->
+    <div class="web3-container">
+      <button id="mintBtn" class="btn-mint">Mint Data on Blockchain (RWA)</button>
+      <div id="terminalLog" class="terminal-log"></div>
+    </div>
+  </section>
+</div>
+
+<div id="player-controls">
+  <button class="btn-ctrl" id="btn-restart">↺ Rejouer</button>
+  <button class="btn-ctrl" id="btn-pause">⏸ Pause</button>
+  <span id="timecode-display">00.0s / 38.0s</span>
+</div>
+
+<script>
+  // --- LE CERVEAU WEB3 (API FETCH) ---
+  let rawData = null;
+  async function fetchOracleData() {
+      try {
+          const response = await fetch('http://127.0.0.1:8000/api/v1/mint-data');
+          rawData = await response.json();
+          console.log("Données de l'IA chargées avec succès :", rawData);
+      } catch (error) {
+          console.error("API Error - L'API FastAPI n'est pas lancée.");
+      }
+  }
+  fetchOracleData(); // On charge les données discrètement en fond dès le début
+
+  // --- TON CODE D'ANIMATION GSAP INTACT ---
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height, opticalMode = false;
+
+  function resizeCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const particles = Array.from({ length: 80 }, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vx: (Math.random() - 0.5) * 3,
+    vy: (Math.random() - 0.5) * 3,
+    size: Math.random() * 2 + 1,
+    alpha: Math.random() * 0.7 + 0.3
+  }));
+
+  function renderParticles() {
+    ctx.clearRect(0, 0, width, height);
+    for (let p of particles) {
+      if (!opticalMode) {
+        p.x += p.vx + (Math.random() - 0.5) * 4;
+        p.y += p.vy + (Math.random() - 0.5) * 4;
+        ctx.fillStyle = `rgba(255, 80, 40, ${p.alpha})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      } else {
+        p.x += 16;
+        ctx.fillStyle = `rgba(0, 255, 130, ${p.alpha})`;
+        ctx.fillRect(p.x, p.y, p.size * 12, 2);
+      }
+      if (p.x > width + 50) p.x = -50;
+      if (p.y > height + 50) p.y = -50;
+      if (p.y < -50) p.y = height + 50;
+    }
+    requestAnimationFrame(renderParticles);
+  }
+  renderParticles();
+
+  function syncYoloBBox() {
+    const cell = document.getElementById('hotspot-cell');
+    const bbox = document.getElementById('yolo-bbox');
+    if (!cell || !bbox) return;
+    bbox.style.left = (cell.offsetLeft - 4) + 'px';
+    bbox.style.top = (cell.offsetTop - 4) + 'px';
+    bbox.style.width = (cell.offsetWidth + 8) + 'px';
+    bbox.style.height = (cell.offsetHeight + 8) + 'px';
+  }
+  window.addEventListener('resize', syncYoloBBox);
+  setTimeout(syncYoloBBox, 100);
+
+  const counters = { duration: 0, copperKwh: 0, copperCo2: 0, photonicKwh: 0, photonicCo2: 0 };
+  const tl = gsap.timeline({
+    onUpdate: () => {
+      const t = tl.time().toFixed(1);
+      document.getElementById('timecode-display').textContent = `${t.padStart(4, '0')}s / 38.0s`;
+    }
+  });
+
+  tl.call(() => { opticalMode = false; document.getElementById('hud-dot').style.background = '#ff4444'; }, null, 0);
+  tl.set('#act1', { autoAlpha: 1, pointerEvents: 'none' }, 0)
+    .fromTo('#act1 .hero-title', { y: 30, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1 }, 0.2)
+    .to('#act1', { autoAlpha: 0, scale: 0.95, duration: 0.5 }, 8.5);
+
+  tl.call(() => { opticalMode = true; document.getElementById('hud-dot').style.background = '#00ff66'; }, null, 9.0);
+  tl.set('#act2', { autoAlpha: 1, pointerEvents: 'none' }, 9.0)
+    .fromTo('#act2', { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 1 }, 9.1)
+    .to('#act2', { autoAlpha: 0, scale: 1.05, duration: 0.5 }, 16.5);
+
+  tl.call(() => { syncYoloBBox(); }, null, 17.0);
+  tl.set('#act3', { autoAlpha: 1, pointerEvents: 'none' }, 17.0)
+    .fromTo('#act3', { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 1 }, 17.1)
+    .fromTo('#yolo-laser-line', { top: '0%' }, { top: '100%', duration: 2, repeat: 3, yoyo: true }, 17.5)
+    .to('#yolo-bbox', { autoAlpha: 1, duration: 0.3 }, 19.5)
+    .to(counters, {
+      duration: 4.5,
+      copperKwh: 0.017075,
+      copperCo2: 0.000957,
+      photonicKwh: 0.004269,
+      photonicCo2: 0.000239,
+      ease: 'power2.out',
+      onUpdate: () => {
+        document.getElementById('counter-duration').textContent = `${counters.duration.toFixed(2)} s`;
+        document.getElementById('val-copper-kwh').textContent = counters.copperKwh.toFixed(6);
+        document.getElementById('val-copper-co2').textContent = counters.copperCo2.toFixed(6);
+        document.getElementById('val-photonic-kwh').textContent = counters.photonicKwh.toFixed(6);
+        document.getElementById('val-photonic-co2').textContent = counters.photonicCo2.toFixed(6);
+      }
+    }, 18.0)
+    .to('#bar-copper', { width: '100%', duration: 2, ease: 'power2.out' }, 18.5)
+    .to('#bar-photonic', { width: '25%', duration: 2, ease: 'power2.out' }, 19.0)
+    .to('#act3', { autoAlpha: 0, duration: 0.5 }, 30.5);
+
+  tl.set('#act4', { autoAlpha: 1, pointerEvents: 'auto' }, 31.0)
+    .fromTo('#act4', { autoAlpha: 0, scale: 0.95 }, { autoAlpha: 1, scale: 1, duration: 1 }, 31.2);
+
+  document.getElementById('btn-restart').addEventListener('click', () => { 
+      tl.restart(); 
+      // Reset du terminal web3
+      document.getElementById('terminalLog').style.display = 'none';
+      document.getElementById('terminalLog').innerHTML = '';
+      const btn = document.getElementById('mintBtn');
+      btn.innerHTML = `Mint Data on Blockchain (RWA)`;
+      btn.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+  });
+  
+  const btnPause = document.getElementById('btn-pause');
+  btnPause.addEventListener('click', () => {
+    if (tl.paused()) { tl.play(); btnPause.textContent = '⏸ Pause'; }
+    else { tl.pause(); btnPause.textContent = '▶ Lecture'; }
+  });
+
+  // --- L'ANIMATION DU BOUTON WEB3 ---
+  document.getElementById('mintBtn').addEventListener('click', () => {
+      const btn = document.getElementById('mintBtn');
+      const log = document.getElementById('terminalLog');
+      
+      // Si l'API est morte, on utilise des fausses données pour assurer le show
+      const dataToMint = rawData || { project_id: "PHOTEON_OPT_001", co2_reduced_kg: 4.5 };
+      
+      btn.innerHTML = `Processing Tx...`;
+      btn.style.background = "#555";
+      log.style.display = "block";
+      
+      log.innerHTML = `> System initialized. Awaiting API validation...<br>`;
+      
+      setTimeout(() => {
+          log.innerHTML += `> Fetched GreenOps Data: Project <strong>${dataToMint.project_id}</strong><br>`;
+          log.innerHTML += `> Preparing Cryptographic Signature for <strong>${dataToMint.co2_reduced_kg}kg</strong> of CO2 avoided...<br>`;
+          log.scrollTop = log.scrollHeight;
+      }, 1000);
+
+      setTimeout(() => {
+          const formattedCo2 = parseInt(dataToMint.co2_reduced_kg * 100);
+          log.innerHTML += `> Calling Smart Contract: <span style="color:#00e5ff;">mintCarbonCredit('${dataToMint.project_id}', ${formattedCo2})</span><br>`;
+          log.scrollTop = log.scrollHeight;
+      }, 2500);
+
+      setTimeout(() => {
+          log.innerHTML += `> <strong style="color:white;">Transaction Confirmed! Hash: 0x${Math.random().toString(16).substr(2, 40)}</strong><br>`;
+          log.scrollTop = log.scrollHeight;
+          btn.innerHTML = `RWA Minted Successfully`;
+          btn.style.background = "#22c55e";
+      }, 4500);
+  });
+</script>
+</body>
+</html>

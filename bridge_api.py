@@ -1,9 +1,19 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
 from datetime import datetime
 
-app = FastAPI(title="Photeon Retina - DePIN")
+app = FastAPI(title="Photeon Retina - DePIN Oracle Node")
+
+# --- NOUVEAU : Autorisation CORS pour le Front-end HTML ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Autorise n'importe quel fichier HTML local à lire l'API
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Modèle de la donnée qui sera tokenisée sur la blockchain
 class CarbonAsset(BaseModel):
