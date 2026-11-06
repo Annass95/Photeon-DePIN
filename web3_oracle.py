@@ -61,7 +61,7 @@ def send_rwa_transaction(project_id, co2_saved):
         signed_tx = w3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
 
         print("📡 Déploiement sur le réseau Whitechain...")
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         
         print(f"✅ SUCCÈS ! Transaction validée dans le bloc {receipt.blockNumber}")
